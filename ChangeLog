@@ -1,0 +1,9 @@
+0.1.0:
+	* textures are now searched in the PREFIX (alike /usr/local/share/pong2/)
+	* bug about the bouncing on the paddle "edges" fixed
+	* cleanups in Player::detectCol()
+	* paddle can't catch balls being little beyond it anymore
+	* ball will soon be able to accelerate itself
+	* added some math includes missing (gcc 3.4.3 is cool)
+
+0.0.9	Initial release
