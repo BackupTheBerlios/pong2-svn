@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/main.cpp)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(pong2, 1.0.0)
+AM_INIT_AUTOMAKE(pong2, 0.1.0)
 
 AM_CONFIG_HEADER(config.h)
 
