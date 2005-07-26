@@ -128,8 +128,10 @@ void Player::draw()
 
 		glEndList();
 	}
+	glPushMatrix();
 	glTranslatef(position.x, position.y, position.z);
 	glCallList(displist);
+	glPopMatrix();
 }
 
 Collision* Player::detectCol(const Vec3f& bposition, const Vec3f& bspeed, double radius)

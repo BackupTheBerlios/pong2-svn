@@ -330,7 +330,6 @@ void Framework::drawScene()
 		   so we don't need to change them. For different light colors / other positions
 		   we would need to add stuff here */
 
-		camera.translate();
 		glScalef(1.0, -1.0, 1.0);
 		glTranslatef(0.0, field.getHeight(),0.0);
 		for (int i = 0; i < ball.size(); i++)	ball[i].draw();
@@ -367,20 +366,14 @@ void Framework::drawScene()
 
 		// finally we want to see the balls themselves, too
 
-		camera.translate();
-
 		for (int i = 0; i < ball.size(); i++)	ball[i].draw();
 
 		// we conclude with translucent objects, first in the back:
-
-		camera.translate();
 
 		for (int i = 0; i < player.size(); i++)
 			if (player[i].getSide() == BACK) player[i].draw();
 
 		// next the ones in the front:
-
-		camera.translate();
 
 		for (int i = 0; i < player.size(); i++)
 			if (player[i].getSide() == FRONT) player[i].draw();

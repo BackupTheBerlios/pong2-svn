@@ -100,11 +100,6 @@ void Ball::move(int ticks)
 
 void Ball::draw()
 {
-	/* Move to position */
-	glTranslatef(position.x, position.y, position.z);
-	/* shrink/grow */
-	glScalef(scale, scale, scale);
-
 	if (displist == -1)
 	{
 		displist = glGenLists(1);
@@ -130,7 +125,15 @@ void Ball::draw()
 
 		glEndList();
 	}
+
+	glPushMatrix();
+	/* Move to position */
+	glTranslatef(position.x, position.y, position.z);
+	/* shrink/grow */
+	glScalef(scale, scale, scale);
+
 	glCallList(displist);
+	glPopMatrix();
 }
 
 void Ball::shrink(int ticks)
