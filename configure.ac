@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/main.cpp)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(pong2, 0.1.0)
+AM_INIT_AUTOMAKE(pong2, 0.1.1)
 
 AM_CONFIG_HEADER(config.h)
 
@@ -41,12 +41,10 @@ more info.]))
 
 dnl Check for SDL
 SDL_VERSION=1.2.4
-AM_PATH_SDL($SDL_VERSION,
-           :,
-           AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!])
-                        )
+AM_PATH_SDL($SDL_VERSION,:,
+			AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
 dnl CFLAGS="$CFLAGS $SDL_CFLAGS"
-CFLAGS="$CFLAGS $SDL_CFLAGS -DPATH_PREFIX=\\\"\$(datadir)/\$(PACKAGE)/\\\" -O3"
+CFLAGS="$CFLAGS $SDL_CFLAGS -DPATH_PREFIX=\\\"\$(datadir)/\$(PACKAGE)/\\\""
 CXXFLAGS="$CFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 

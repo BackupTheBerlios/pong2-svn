@@ -1,15 +1,3 @@
-/*
- * This code was created by Jeff Molofee '99
- * (ported to Linux/SDL by Ti Leggett '01)
- *
- * If you've found this code useful, please let me know.
- *
- * Visit Jeff at http://nehe.gamedev.net/
- *
- * or for port-specific comments, questions, bugreports etc.
- * email to leggett@eecs.tulane.edu
- */
-
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
@@ -20,8 +8,8 @@
 
 //! usage declaration printed if the user gives in a malformed argument, like -h
 #define USAGE \
-"[-n <name>] [-c <server>] [-p port] [-w <width> -h <height>]\
-\n[-b bitsperpixel] [-f]\
+"[-n <name>] [-c <server>] [-p <port>] [-w <width> -h <height>]\
+\n[-b <bitsperpixel>] [-f]\
 \n\
 \n -n \t set your name (default: Hans)\
 \n -c \t connect to already running server (default: act as server)\
@@ -98,27 +86,11 @@ int main (int argc, char **argv)
 
 	/* SDL_SetVideoMode flags */
 	int videoFlags = SDL_OPENGL;
-	videoFlags |= SDL_GL_DOUBLEBUFFER;
-	videoFlags |= SDL_HWPALETTE;
-
-	/* Fetch the video info */
-	const SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
-	if (!videoInfo)
-	{
-		std::cerr << "Can't collect video info: " << SDL_GetError() << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	/* This checks to see if surfaces can be stored in memory */
-	if (videoInfo->hw_available)
-		videoFlags |= SDL_HWSURFACE;
-	else	videoFlags |= SDL_SWSURFACE;
-
-	/* This checks if hardware blits can be done */
-	if (videoInfo->blit_hw) videoFlags |= SDL_HWACCEL;
 
 	/* Sets up OpenGL double buffering */
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	/* Sets up the stencil buffer */
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
 
 	/* Get an SDL surface */
 	SDL_Surface *surface = SDL_SetVideoMode(conf.width, conf.height, conf.bpp, videoFlags);
@@ -133,13 +105,13 @@ int main (int argc, char **argv)
 	/* Initialize the networking - net2 is based on sdlnet */
 	if (SDLNet_Init() == -1)
 	{
-		std::cerr << "Can't initialize networking (1): " << SDLNet_GetError() << std::endl;
+		std::cerr << "Can't initialize networking (Stage 1): " << SDLNet_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
 	if (NET2_Init() == -1)
 	{
-		std::cerr << "Can't initialize networking (1): " << NET2_GetError() << std::endl;
+		std::cerr << "Can't initialize networking (Stage 2): " << NET2_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
 

@@ -28,8 +28,8 @@ MANUAL:
 	which you can ask for by using for example the "-?" option:
 
 -------------------------------------------------------------------------------
-Usage: src/pong2 [-n <name>] [-c <server>] [-p port] [-w <width> -h <height>]
-		[-b bitsperpixel] [-f]
+Usage: pong2 [-n <name>] [-c <server>] [-p <port>] [-w <width> -h <height>]
+		[-b <bitsperpixel>] [-f]
 
  -n      set your name (default: Hans)
  -c      connect to already running server (default: act as server)
@@ -39,10 +39,6 @@ Usage: src/pong2 [-n <name>] [-c <server>] [-p port] [-w <width> -h <height>]
  -b      set individual bitsperpixel (default: 32)
  -f      operate in fullscreen mode (default: windowed, toggle with 'f' key)
 -------------------------------------------------------------------------------
-
-	Next, make sure the game can find it's texture folder "data". So
-	instead of issuing "cd src && ./pong2", call "src/pong2 <options>".
-
 
 	Now while you're running the game, you can press several keys:
 
@@ -59,7 +55,7 @@ F1	Set camera mode to "Free". This means, that no automatic camera
 F2	Set camera mode to "Follow Paddle Reverse". This means, the camera
 	will follow the movement of your paddle by giving sight onto your
 	paddle.
-F3	Set camera mode to "Follow Paddle". This let's the camera follow the
+F3	Set camera mode to "Follow Paddle". This lets the camera follow the
 	paddle a little like you're standing behind the paddle and want to
 	look through it.
 
@@ -145,7 +141,7 @@ IMPLEMENTATION:
 	function - which is a cleaner way anyway. Deleting this structure on
 	the requested removal of the timer (mostly when it's done) is a very
 	bad idea - it works most of the time, but if a timer's event gets
-	delayed too lang, this will crash. So we only can cleanup the SDL
+	delayed too long, this will crash. So we can only cleanup the SDL
 	Timer in time and need to clean up the rest afterwards.
 *	Getting Networking to work
 	Our networking protocol is rather easy - after some small talk on

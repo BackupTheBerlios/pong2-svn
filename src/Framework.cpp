@@ -7,7 +7,7 @@
 
 Framework::Framework(void *surf, const Configuration& conf, Networkstate initial)
  : field(this), output(this), surface((SDL_Surface*)surf), version(conf.version),
-   paused(1), timeunit(1), lasttime(SDL_GetTicks()), frames(0), state(initial), xdiff(0), camera(conf.width, conf.height)
+   paused(1), timeunit(0), lasttime(SDL_GetTicks()), frames(0), state(initial), xdiff(0), camera(conf.width, conf.height)
 {
 	/* initialize OpenGL */
 	resetGL();
@@ -94,7 +94,7 @@ void Framework::loop()
 		int tdiff = SDL_GetTicks() - lasttime;
 		if (tdiff > timeunit) {
 			frames++;
-			xdiff += tdiff; // greater 1 because we decided to let tdiff be greater than timeunit
+			xdiff += tdiff; // always greater 0 because we decided to let tdiff be greater than timeunit
 			if ((xdiff >= 100)&&(xdiff >= timeunit * 20)) {
 				output.updateFPS(frames * 1000.0 / xdiff); // There are 1000 ticks / second
 				frames = 0;
@@ -352,7 +352,6 @@ void Framework::drawScene()
 
 		glDisable(GL_STENCIL_TEST);
 		glPopMatrix();
-
 		/* we now can overdraw the ball with the half translucent wall. this will give
 		   a nice looking reflection effect */
 

@@ -165,7 +165,7 @@ protected:
 	//! the UDP port number to send packets to
 	unsigned short sendport;
 	//! pause state
-	/* Is 0 if not paused and otherwise holds the ticks (ms) which need to be processed after the pause. */
+	/*! Is 0 if not paused and otherwise holds the ticks (ms) which need to be processed after the pause. */
 	unsigned int paused;
 private:
 	//! initialize GL
