@@ -7,7 +7,7 @@
 
 Framework::Framework(void *surf, const Configuration& conf, Networkstate initial)
  : field(this), output(this), surface((SDL_Surface*)surf), version(conf.version),
-   paused(1), timeunit(0), lasttime(SDL_GetTicks()), frames(0), state(initial), xdiff(0), camera(conf.width, conf.height)
+   paused(1), timeunit(1), lasttime(SDL_GetTicks()), frames(0), state(initial), xdiff(0), camera(conf.width, conf.height)
 {
 	/* initialize OpenGL */
 	resetGL();
@@ -148,6 +148,7 @@ void Framework::handleMouseMove(int x, int y, unsigned char buttons)
 	} else if (buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
 	{
 		camera.adjustDistance((double)y / 10.0);
+		resetGL();
 	} else {
 		if (!paused) movePaddle((double)x / 50.0, (double)-y / 50.0, SDL_GetTicks());
 		if (camera.getMode() == Camera::FOLLOW_PADDLE)
@@ -230,8 +231,8 @@ void Framework::resetGL()
 	/* Depth buffer setup */
 	glClearDepth(1.0f);
 
-	/* Enable normalizing of normals */
-	glEnable(GL_NORMALIZE);
+	/* Enable normalizing of normals, actually not needed */
+	//glEnable(GL_NORMALIZE);
 
 	/* type of depth test to do */
 	glDepthFunc(GL_LEQUAL);
@@ -259,20 +260,23 @@ void Framework::resetGL()
 	glLightfv(GL_LIGHT3, GL_DIFFUSE, l_diffuse);
 	glLightfv(GL_LIGHT3, GL_SPECULAR, l_specular);
 
+	// translate according actual camera position
+	camera.translate();
+
 	{
-		GLfloat l_pos[] = { -field.getWidth(), -field.getHeight(), -camera.getDistance(), 1.0f };
+		GLfloat l_pos[] = { -field.getWidth(), -field.getHeight(), 0.0f, 1.0f };
 		glLightfv(GL_LIGHT0, GL_POSITION, l_pos);
 	}
 	{
-		GLfloat l_pos[] = { -field.getWidth(), field.getHeight(), -camera.getDistance(), 1.0f };
+		GLfloat l_pos[] = { -field.getWidth(), field.getHeight(), 0.0f, 1.0f };
 		glLightfv(GL_LIGHT1, GL_POSITION, l_pos);
 	}
 	{
-		GLfloat l_pos[] = { field.getWidth(), -field.getHeight(), -camera.getDistance(), 1.0f };
+		GLfloat l_pos[] = { field.getWidth(), -field.getHeight(), 0.0f, 1.0f };
 		glLightfv(GL_LIGHT2, GL_POSITION, l_pos);
 	}
 	{
-		GLfloat l_pos[] = { field.getWidth(), field.getHeight(), -camera.getDistance(), 1.0f };
+		GLfloat l_pos[] = { field.getWidth(), field.getHeight(), 0.0f, 1.0f };
 		glLightfv(GL_LIGHT3, GL_POSITION, l_pos);
 	}
 

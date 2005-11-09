@@ -1,3 +1,16 @@
+0.1.2:
+	* fixed bug with wrong lighting if the camera distance is adjusted
+	* adjusted timeunit to 1, still investigating timing problems
+
+0.1.1:
+	* added stencil buffer initialization
+	  (the stencil buffer got disabled by some drivers before, which caused
+	   the ball reflections to be drawn everywhere)
+	* fixed outdated sdl initialization
+	* some minor fixes and changes
+	* removed unused pixmap from distribution
+	* README updated
+
 0.1.0:
 	* textures are now searched in the PREFIX (alike /usr/local/share/pong2/)
 	* bug about the bouncing on the paddle "edges" fixed
@@ -6,4 +19,4 @@
 	* ball will soon be able to accelerate itself
 	* added some math includes missing (gcc 3.4.3 is cool)
 
-0.0.9	Initial release
+0.0.9:	Initial release
