@@ -1,0 +1,203 @@
+
+		 =======================================
+		  Pong² - A Three Dimensional Pong Game
+		 =======================================
+
+		  Written By Johannes Jordan (sijojord)
+
+
+SUMMARY:
+	Pong² gives you the opportunity to revamp the old and famous
+	gameplay of Atari's first game. It uses OpenGL for drawing, has
+	really freaky visuals and adds another dimension. Now every
+	player can move along two axes; and instead of watching the
+	playing field from the side, you're perspective is first person.
+	Therefore everyone needs his own PC - this is a networked
+	multiplayer game :)
+
+
+MANUAL:
+	To play this game, you have to start it regulary on one machine
+	as "server" and tell your friend to connect from his box to yours.
+	While you're in server mode, you also have the opportunity to do
+	some practicing and get a feeling about the gameplay, your paddle
+	and the ball's movement: You can play against "Mr. Wand", but be
+	warned: nobody could beat Mr. Wand before!
+
+	First important thing to get started are the command line options,
+	which you can ask for by using for example the "-?" option:
+
+-------------------------------------------------------------------------------
+Usage: pong2 [-n <name>] [-c <server>] [-p <port>] [-w <width> -h <height>]
+		[-b <bitsperpixel>] [-f]
+
+ -n      set your name (default: Hans)
+ -c      connect to already running server (default: act as server)
+ -p      set alternative udp networking port (default: 6642)
+ -w      set x resolution in pixels (default: 1024)
+ -h      set y resolution in pixels (default: 768)
+ -b      set individual bitsperpixel (default: 32)
+ -f      operate in fullscreen mode (default: windowed, toggle with 'f' key)
+-------------------------------------------------------------------------------
+
+	Now while you're running the game, you can press several keys:
+
+-------------------------------------------------------------------------------
+
+q	Quit the game
+f	Toggle fullscreen mode
+p /
+ESC	Toggle pause mode. Note that this affects also your opponent. In
+	fact, really the whole game is halted in paused mode. Toggling pause
+	also toggles wether your mouse is grabbed or not.
+F1	Set camera mode to "Free". This means, that no automatic camera
+	movement will be done.
+F2	Set camera mode to "Follow Paddle Reverse". This means, the camera
+	will follow the movement of your paddle by giving sight onto your
+	paddle.
+F3	Set camera mode to "Follow Paddle". This lets the camera follow the
+	paddle a little like you're standing behind the paddle and want to
+	look through it.
+
+-------------------------------------------------------------------------------
+
+	Let's see what you can do with your mouse. Moving the paddle along is
+	a kinda easy. Please notice that the paddle has a maximum possible
+	speed to be moved with.
+	To adjust the camera, you now can hold down the right mouse key and
+	change the viewing angle by moving around. Also, by holding the middle
+	mouse key, you're able to adjust the distance of the camera to the
+	action going on.
+
+	By pressing the left mouse key, you serve the ball, if one was
+	attached to your paddle. Be aware of how the ball leaves you're
+	paddle. If you got some speed on your paddle pointing in a specific
+	direction, the ball will drift to that direction.
+
+	This is also important for bouncing the ball. You can give it some
+	additional speed by moving your paddle along and also reduce it's
+	speed. It won't help you against Mr. Wand - but to stamp down a
+	regular opponent, you will need a little knowledge about the ball's
+	reaction to your paddle movement.
+	Additionally to this, as your paddle is bent, the position on which
+	the ball hits your paddle is also influencing its flight path.
+
+	While playing, you can count on the reflections on the walls to get a
+	better feeling about where the ball actually travels around.
+
+	One additional note: Every player gets 5 rounds to serve at a time,
+	regardlessly who won or lost the last round.
+
+	Now have fun playing and kick some ass!
+
+
+IMPLEMENTATION:
+	I want to discuss several topics here to describe the main challenges
+	of the implementation and how we get beyond:
+
+*	Abstraction of SDL / object orientation
+	I wanted the different modules to be strictly _not_ dependant on the
+	SDL or anything alike. They also should never know anything about our
+	type of networking, and so on. The only thing reasonably for me to
+	let them depend on was OpenGL for their drawing code. So one big
+	point of the OO information hiding model was to let both Server and
+	Client to be inherited from Framework. This not only made it possible
+	for them to not know anything about SDL, but also to not make it
+	necessary to let Framework know anything about Client or Server. So
+	whenever the environment makes it necessary to kick either Server or
+	Client to do something (like the user want to move the paddle with
+	the mouse), virtual functions help to get across that border. The
+	Server never knows how actually the user generates the movement and
+	the Framework doesn't know wether the server uses the data for cal-
+	culations or the client just sends it over the network.
+	So there are functions defined in the objects which only get called
+	by the Server or by the Client and not both. To not hevily rely on
+	this, I decided to let stuff like the global detectCol() function to
+	remain in Framework (no matter it will only be called by a function
+	only called by the Server).
+	To make the program extensible, the Framework holds vectors of
+	objects like Balls and Players. The Server yet knows there are only
+	two Players - and which one is which one - but the Framework doesn't
+	need to know and still can satisfy the needs of processing all of
+	the objects.
+*	Getting Timers to work
+	This one also belongs to the last point a little bit. I didn't want
+	to make any object aware of what an SDL timer is or alike. So I had
+	to think about layering around it without too much overhead and
+	hassle. First, we have to think of how a called Timer ever reaches
+	it's calling object, without knowing it. So all Timer calling
+	functions have to be inherited from EventReceiver, which is nothing
+	more then a pure virtual action() function and an enum to describe
+	different Timer Event types; everything else is to be handled by
+	the object itself. To add a layer above the pure SDL Timer, we need
+	another structure as part of the Framework, which has to be
+	accessable, in our implementation by an index over a pointer holding
+	vector, just for one purpose: to be able to stop the timer. A pointer
+	to this Struct is also given to the timer itself as userdata to handle
+	it's event call. We can't operate in the timer's processing function
+	itself, as the Timer ends in it's own thread and nothing is thread
+	save here. So we have to push an SDL User Event, which gets passed the
+	struct pointer and then finally collect the timer in the loop()
+	function - which is a cleaner way anyway. Deleting this structure on
+	the requested removal of the timer (mostly when it's done) is a very
+	bad idea - it works most of the time, but if a timer's event gets
+	delayed too long, this will crash. So we can only cleanup the SDL
+	Timer in time and need to clean up the rest afterwards.
+*	Getting Networking to work
+	Our networking protocol is rather easy - after some small talk on
+	the beginning, the server continously reports ball and paddle
+	positions, while the client reports if it wants to move the paddle.
+	Some random additional packages are needed too, like to tell the
+	Pause state or score.
+	We have to be aware that UDP loses packages; but in fact, if in our
+	implementation packages are lost during initialization, it would
+	just not work out (it's very unlikely to happen as this is the state
+	before we start to send lots of packages). If gamedata packages are
+	lost, this isn't a really big issues. The ball for example would not
+	be updated as often as it could be, or there could be a scoring
+	get lost and when the player scores again, it will again show up
+	correctly..
+	To have a clean way of building network packages, I wrote a little
+	Buffer called helper class which understands every packet having a
+	type which is sent first, and then random data which is pushed and
+	popped (on the other side) according to the packet's type. We don't
+	have error handling here and have to assure ourselves that packages
+	really contain the variables the receiver expects from them. To do
+	this, a versioning mechanism prevents two instances of different
+	game versions to get in touch with each other.
+*	Colliding
+	This is a bad chapter. First I thought I could do this in a very
+	easy way for walls, a not-that-easy way for paddles and a nearly
+	impossible(?) way for other balls (future!). After having some not
+	really working code, I had to rethink the whole issue. Now the ball
+	doesn't tell anyone where it is from and where it wants to be, but
+	instead iterates through alle positions on it's way and ask if it's
+	already stuck inside anything. How many positions are tested against
+	is determined by the ball's speed factor (the biggest one of x, y, z),
+	which eventually will lead to less fps on a high ball speed.
+	Because I think of having very little time and place difference
+	between these steps, the collided object is allowed to just move the
+	ball a little bit aside in the case of a collision, which seems to
+	indeed work good.
+	Collinding can be done very simple and very extensive with that model.
+	As there is no real need to be physically correct or something like
+	that, here simple methods are preferenced. While rewriting the
+	collision code for the paddle I found out that even the simplest
+	approach - doing without more expensive tests - can lead to very
+	well results.
+	To go even further, some sluttery can indeed assist in a pleasing
+	gameplay.
+*	Reflections
+	The main purpose, apart from the visual appeal, of the reflections
+	is to help the player track the ball. So I chose not to spend any
+	work on having the reflections go 'right' dependent on from where
+	you look. In fact, they are drawn just are mirrored on the appropriate
+	axis (X or Y). To get them drawn on the walls and have everything
+	look nice, I draw the ball reflection first and overdraw it with the
+	real, translucent, wall. This worked out very well, after not only
+	filling the stencil buffer, but also drawing a solid background to
+	where the reflection and finally the wall itself will go. But it
+	resulted in a little contrasted wall texture. To get beyond that, the
+	wall is drawed two times fully textured - while filling the stencil
+	buffer and after drawing the reflection. The first time, I darken it,
+	the second time it has a decreased alpha value.
