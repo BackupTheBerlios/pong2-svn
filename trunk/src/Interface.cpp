@@ -8,12 +8,12 @@
 Interface::Interface(Framework* control)
  : fontlist(-1), framework(control), fps("0 FPS"), roundnum("Round 1"), paused(false), flashtimer(-1)
 {
-	backTexture = framework->loadTexture("background2.bmp");
-	charTexture[0] = framework->loadTexture("q1.bmp");
-	charTexture[1] = framework->loadTexture("q2.bmp");
-	charTexture[2] = framework->loadTexture("q3.bmp");
-	charTexture[3] = framework->loadTexture("q4.bmp");
-	charTexture[4] = framework->loadTexture("q5.bmp");
+	backTexture = framework->loadTexture("background.png");
+	charTexture[0] = framework->loadTexture("q1.png");
+	charTexture[1] = framework->loadTexture("q2.png");
+	charTexture[2] = framework->loadTexture("q3.png");
+	charTexture[3] = framework->loadTexture("q4.png");
+	charTexture[4] = framework->loadTexture("q5.png");
 
 	// we need to have the textures at hand first
 	createFont();

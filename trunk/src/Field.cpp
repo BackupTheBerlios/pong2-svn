@@ -6,7 +6,7 @@
 Field::Field(Framework *control)
 : framework(control), displist(-1), width(4.0), height(4.0), length(8.0)
 {
-	wallTexture = framework->loadTexture("wall.bmp");
+	wallTexture = framework->loadTexture("wall.png");
 }
 
 Collision* Field::detectCol(const Vec3f& position, const Vec3f& speed, double radius)

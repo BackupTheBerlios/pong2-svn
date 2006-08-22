@@ -1,4 +1,5 @@
 0.1.2:
+	* uses SDL_image for image loading, therefor PNGs are used instead of BMP
 	* fixed bug with wrong lighting if the camera distance is adjusted
 	* adjusted timeunit to 1, still investigating timing problems
 

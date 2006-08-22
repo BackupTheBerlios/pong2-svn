@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/main.cpp)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(pong2, 0.1.1)
+AM_INIT_AUTOMAKE(pong2, 0.1.2)
 
 AM_CONFIG_HEADER(config.h)
 
@@ -37,7 +37,7 @@ more info.]))
 # AC_CHECK_LIB([SDL_ttf], [TTF_OpenFont],, AC_MSG_ERROR([Error! You need SDL_ttf.
 # Check out http://www.libsdl.org/projects/SDL_ttf/ for more info.]))
 
-# AC_CHECK_LIB([SDL_image], [IMG_Load],, AC_MSG_ERROR([SDL_image not found]))
+AC_CHECK_LIB([SDL_image], [IMG_Load],, AC_MSG_ERROR([SDL_image not found!]))
 
 dnl Check for SDL
 SDL_VERSION=1.2.4

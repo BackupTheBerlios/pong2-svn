@@ -66,7 +66,7 @@ public:
 	~Framework();
 
 	//! load a texture into OpenGL
-	/*!	\param filename the file containing the texture (actually .bmp)
+	/*!	\param filename the file containing the texture (has to be readable by SDL_image)
 		\result the number given to the texture for further binding
 	*/
 	GLuint loadTexture(const std::string& filename);

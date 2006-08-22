@@ -4,6 +4,8 @@
 #include "Interface.hpp"
 #include "Buffer.hpp"
 #include <math.h>
+#include "SDL_image.h"
+
 
 Framework::Framework(void *surf, const Configuration& conf, Networkstate initial)
  : field(this), output(this), surface((SDL_Surface*)surf), version(conf.version),
@@ -191,29 +193,46 @@ GLuint Framework::loadTexture(const std::string& filename)
 	SDL_Surface *image;
 
 	/* trying to load the bitmap */
-	if ((image = SDL_LoadBMP(fullname.c_str())))
+	if ((image = IMG_Load(fullname.c_str())))
 	{
-		/* Create the texture */
-		glGenTextures(1, &texture);
+		/* As the generated SDL surface has the format of the input image,
+		   ie 24 bit or 8 bit, we have to convert it to the format
+		   GL expects from us. In this case, 24 bpp.
+		*/
+		SDL_PixelFormat format;
+		format.palette = NULL;
+		format.BitsPerPixel= 24;	format.BytesPerPixel= 3;
+		format.Rshift= 16;	format.Gshift= 8;	format.Bshift= 0;
+		format.Rmask= 0xff<<16;	format.Gmask= 0xff<<8;	format.Bmask= 0xff;
 
-		/* Load in texture */
-		glBindTexture(GL_TEXTURE_2D, texture);
+		SDL_Surface *teximage = SDL_ConvertSurface(image, &format, SDL_SWSURFACE);
+		if (teximage) {
+			/* Create the texture */
+			glGenTextures(1, &texture);
 
-		/* Nearest filtering looks good on our wall texture */
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			/* Load in texture */
+			glBindTexture(GL_TEXTURE_2D, texture);
 
-		/* Generate the texture */
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->w, image->h, 0, GL_BGR,
-				GL_UNSIGNED_BYTE, image->pixels);
+			/* Nearest filtering looks good on our wall texture */
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+			/* Generate the texture */
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, teximage->w, teximage->h, 0, GL_BGR,
+					GL_UNSIGNED_BYTE, teximage->pixels);
+
+			SDL_FreeSurface(teximage);
+		} else {
+			std::cerr << "Failed to convert texture format: " << fullname << std::endl;
+			shutdown();
+		}
+
+		SDL_FreeSurface(image);
 	} else {
 		// we have no proper way to deal with missing textures, so we quit
-		std::cerr << "Couldn't load texture: " << fullname << std::endl;
+		std::cerr << "Couldn't load texture: " << fullname << "\n\t" << IMG_GetError() << std::endl;
 		shutdown();
 	}
-	/* Free up any memory we may have used */
-	if (image)
-		SDL_FreeSurface(image);
 
 	return texture;
 }

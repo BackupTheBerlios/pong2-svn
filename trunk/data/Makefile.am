@@ -1,4 +1,4 @@
 dist_pkgdata_DATA = \
-wall.bmp \
-q1.bmp q2.bmp q3.bmp q4.bmp q5.bmp \
-background2.bmp
+wall.png \
+q1.png q2.png q3.png q4.png q5.png \
+background.png
