@@ -7,7 +7,7 @@
 
 Player::Player(Framework* control, const std::string& nick, Side where, double z)
  : framework(control), name(nick), side(where), position(0, 0, (where == FRONT ? 1.0 : -1.0) * z), width(1.0f), height(1.0f),
-	speed(0, 0), maxspeed(0.01f), thickness(0.05), deceltimer(-1), attachedBall(NULL), score(0), displist(-1), lastmove(0)
+	speed(0, 0), maxspeed(0.01f), thickness(0.05), deceltimer(-1), attachedBall(NULL), displist(-1), lastmove(0)
 {}
 
 Player::~Player()

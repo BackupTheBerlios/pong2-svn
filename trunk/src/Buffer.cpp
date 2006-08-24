@@ -42,6 +42,13 @@ void Buffer::pushDouble(double value)
 	size += sizeof(double);
 }
 
+void Buffer::pushId(grapple_user value)
+{
+	data = (char*)realloc(data, size + sizeof(grapple_user));
+	memcpy(data + size, &value, sizeof(grapple_user));
+	size += sizeof(Side);
+}
+
 void Buffer::pushSide(Side value)
 {
 	data = (char*)realloc(data, size + sizeof(Side));
@@ -69,6 +76,14 @@ double Buffer::popDouble()
 	double value;
 	memcpy(&value, data + pos, sizeof(double));
 	pos += sizeof(double);
+	return value;
+}
+
+grapple_user Buffer::popId()
+{
+	grapple_user value;
+	memcpy(&value, data + pos, sizeof(grapple_user));
+	pos += sizeof(grapple_user);
 	return value;
 }
 

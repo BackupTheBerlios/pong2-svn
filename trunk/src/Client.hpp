@@ -2,8 +2,6 @@
 #define CLIENT_H
 
 #include "Framework.hpp"
-#include "Buffer.hpp"
-#include <grapple/grapple.h>
 
 //! network game client
 /*! The client can't do anything by its own. It's intended to give away all the work to the Server
@@ -44,7 +42,7 @@ private:
 	void updateGame(int ticks);
 
 	//! unused, see Server
-	void score(Side side);
+	inline void doScore(Side side) {};
 
 	//! let the player kickoff the ball (notifies the Server)
 	void serveBall();

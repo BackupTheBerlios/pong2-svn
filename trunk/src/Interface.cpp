@@ -4,6 +4,7 @@
 #include <math.h>
 #include "Interface.hpp"
 #include "Framework.hpp"
+#include "Player.hpp"
 
 Interface::Interface(Framework* control)
  : fontlist(-1), framework(control), fps("0 FPS"), roundnum("Round 1"), paused(false), flashtimer(-1)
@@ -41,22 +42,12 @@ void Interface::updateFPS(double frames)
 	fps = fpsstr.str();
 }
 
-void Interface::updateScore(Side side, int index, const std::string& name, int points)
+void Interface::updateScore(Side side, int points)
 {
-	int found = -1;
-	for (int i = 0; i < score.size(); i++)
-	{
-		if ((score[i].side == side)&&(score[i].index == index))
-			found = i;
-	}
-	if (found == -1) {
-		score.push_back(Score(side, index));
-		found = score.size() - 1;
-	}
-	score[found].name = name;
+	int idx = (side == FRONT ? 0 : 1);
 	std::stringstream pts;
 	pts << points;
-	score[found].points = pts.str();
+	score[idx] = pts.str();
 }
 
 void Interface::addMessage(Message msg)
@@ -322,30 +313,44 @@ void Interface::drawFPS()
 
 void Interface::drawScore()
 {
+	const std::vector<Player*>& player = framework->getPlayers();
 	beginDraw();
 
-	for(int i = 0; i < score.size(); i++)
+	for(int i = 0; i < 2; i++)
 	{
-		if (i > 0) glLoadIdentity();
-		if (score[i].side == LEFT) {
+		if (i == 0) {
 			glColor3f(0.5, 1.0, 0.5);
-			glTranslatef(2.0, 0, 0);
 		} else {
 			glColor3f(1.0, 0.5, 0.5);
-			glTranslatef(400.0 - textWidth(score[i].name)*2.0 - 2.0, 0, 0);
 		}
-		glTranslatef(0, 300.0 - 62.0*(score[i].index) - 2.0, 0);
-		glScalef(2.0, 2.0, 2.0);
-		drawText(score[i].name);
+		int namecount = 0;
+		for (int j = 0; j < player.size(); ++j)
+		{
+			if (player[j]->getSide() == (i == 0 ? FRONT : BACK))
+			{
+				const char* name = player[j]->getName().c_str();
+				glLoadIdentity();
+				if (i == 0) {
+					glTranslatef(2.0, 0, 0);
+				} else {
+					glTranslatef(400.0 - textWidth(name)*2.0 - 2.0, 0, 0);
+				}
+				glTranslatef(0, 300.0 - 2.0 - 18.0 * namecount, 0);
+				glScalef(2.0, 2.0, 2.0);
+				drawText(name);
+				namecount++;
+			}
+		}
+
 		glLoadIdentity();
-		if (score[i].side == LEFT) {
+		if (i == 0) {
 			glTranslatef(2.0, 0, 0);
 		} else {
-			glTranslatef(400.0 - textWidth(score[i].points)*5.0 - 2.0, 0, 0);
+			glTranslatef(400.0 - textWidth(score[i])*5.0 - 2.0, 0, 0);
 		}
-		glTranslatef(0, 300.0 - 62.0*(score[i].index) - 20.0, 0);
+		glTranslatef(0, 300.0 - 2.0 - 18.0 * namecount, 0);
 		glScalef(5.0, 5.0, 5.0);
-		drawText(score[i].points);
+		drawText(score[i]);
 	}
 
 	endDraw();

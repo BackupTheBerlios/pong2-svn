@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <set>
 
 class Framework;
 
@@ -47,7 +48,9 @@ public:
 	/*! \param frames recently achieved Frames Per Second
 	*/
 	void updateFPS(double frames);
-	void updateScore(Side side, int index, const std::string& name, int points);
+
+	void updateScore(Side side, int points);
+
 	//! add a Message to be shown
 	/*! \param msg the Message type */
 	void addMessage(Message msg);
@@ -81,23 +84,6 @@ private:
 		//! the width of this character (height is static)
 		int width;
 	} character[96];
-
-	//! one of the scores printed on the screen
-	struct Score {
-		//! default constructor
-		/*!	\param sd LEFT or RIGHT side
-			\param idx the index on that side
-		*/
-		inline Score(Side sd, int idx) : side(sd), index(idx), name(""), points("") {}
-		//! LEFT or RIGHT side
-		Side side;
-		//! index per side
-		int index;
-		//! Player name
-		std::string name;
-		//! Player score
-		std::string points;
-	};
 
 	//! build up the font
 	void createFont();
@@ -134,7 +120,7 @@ private:
 	//! actual fps string
 	std::string fps;
 	//! scores to be shown
-	std::vector<Score> score;
+	std::string score[2];
 	//! list of active messages
 	std::list<Message> message;
 };

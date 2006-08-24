@@ -1,11 +1,14 @@
 #ifndef FRAMEWORK_H
 #define FRAMEWORK_H
 
+#include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "SDL.h"
 #include <GL/gl.h>
+#include "grapple/grapple.h"
 
 #include "stuff.hpp"
 #include "Interface.hpp"
@@ -37,8 +40,21 @@ public:
 		SDL_TimerID timer;
 	};
 
+	struct Peer {
+		std::string name;
+		Player* player;
+		bool ready;
+
+		inline Peer(std::string id)
+		: name(id), player(NULL), ready(false) {}
+		// needed by std::map, do not use
+		inline Peer() {}
+	};
+
 	//! holds the actual networking state
 	enum Networkstate {
+		//! initialization isn't finished yet
+		UNINITIALIZED,
 		//! the server is waiting for a client to arrive
 		WAITING,
 		//! the client tries to connect to a server
@@ -100,6 +116,8 @@ public:
 	/*!	\param index the timer's number which was given by addTimer()
 	*/
 	void removeTimer(int index);
+
+	inline const std::vector<Player*>& getPlayers() { return player; }
 protected:
 	//! enter the event loop, which indefinitely runs and processes events
 	void loop();
@@ -117,10 +135,7 @@ protected:
 
 	virtual void sendPacket(Buffer& data)=0;
 
-	//! vector holding all connected peers
-	/*! Actually we only support one connection. This can be extended in future.
-	*/
-	std::vector<Peer> peer;
+	void sendSimplePacket(Type t);
 
 	//! our Camera object setting up the viewport
 	Camera camera;
@@ -141,7 +156,10 @@ protected:
 		If noone is connected as client, the server provides the famous "Mr. Wand" called opponent.
 		Better not try to beat him!
 	*/
-	std::vector<Player> player;
+	std::vector<Player*> player;
+
+	std::map<grapple_user, Peer> peer;
+	grapple_user localid;
 
 	//! pause state
 	/*! Is 0 if not paused and otherwise holds the ticks (ms) which need to be processed after the pause. */
@@ -169,7 +187,7 @@ private:
 	//! update the game per frame, therefore called by loop()
 	virtual void updateGame(int ticks)=0;
 	//! process an occured score (the ball went out of the field), called by detectCol()
-	virtual void score(Side side)=0;
+	virtual void doScore(Side side)=0;
 	//! serve the ball, i.e. the player wants to kick it off, called by loop()
 	virtual void serveBall()=0;
 

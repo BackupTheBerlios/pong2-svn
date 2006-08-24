@@ -376,12 +376,12 @@ void Framework::drawScene()
 		// we conclude with translucent objects, first in the back:
 
 		for (int i = 0; i < player.size(); i++)
-			if (player[i].getSide() == BACK) player[i].draw();
+			if (player[i]->getSide() == BACK) player[i]->draw();
 
 		// next the ones in the front:
 
 		for (int i = 0; i < player.size(); i++)
-			if (player[i].getSide() == FRONT) player[i].draw();
+			if (player[i]->getSide() == FRONT) player[i]->draw();
 
 		// these are overlays
 		output.drawScore();
@@ -405,15 +405,15 @@ Collision* Framework::detectCol(const Vec3f& position, const Vec3f& speed, doubl
 	// detection for paddles
 	for (int i = 0; i < player.size(); i++)
 	{
-		col = player[i].detectCol(position, speed, radius);
+		col = player[i]->detectCol(position, speed, radius);
 		if (col != NULL) return col;
 	}
 
 	// wether the ball is still inside?
 	Side side = field.zOutside(position.z);
 	if (side != NONE)
-		// score() detects itself if it's called multiple times
-		score(side);
+		// doScore() detects itself if it's called multiple times
+		doScore(side);
 	return NULL;
 }
 
@@ -448,13 +448,10 @@ void Framework::removeTimer(int index)
 	*/
 }
 
-unsigned int processTimer(unsigned int intervall, void* data)
+void Framework::sendSimplePacket(Type t)
 {
-	SDL_Event event;
-	event.type= SDL_USEREVENT;
-	event.user.data1 = data;
-	SDL_PushEvent(&event);
-	return intervall;
+	Buffer sbuf(t);
+	sendPacket(sbuf);
 }
 
 void Framework::shutdown()
@@ -462,4 +459,13 @@ void Framework::shutdown()
 	SDL_Event killer;
 	killer.type = SDL_QUIT;
 	SDL_PushEvent(&killer);
+}
+
+unsigned int processTimer(unsigned int intervall, void* data)
+{
+	SDL_Event event;
+	event.type= SDL_USEREVENT;
+	event.user.data1 = data;
+	SDL_PushEvent(&event);
+	return intervall;
 }

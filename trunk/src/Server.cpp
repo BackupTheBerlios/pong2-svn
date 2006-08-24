@@ -5,23 +5,18 @@
 #include <math.h>
 
 Server::Server(void *surf, const Configuration& conf)
- : Framework(surf, conf, WAITING), round(0), ballouttimer(-1), ballspeed(6.0)
+ : Framework(surf, conf, UNINITIALIZED), ballouttimer(-1), ballspeed(6.0)
 {
 	ball.push_back(Ball(this));
-	player.push_back(Player(this, conf.playername, FRONT, field.getLength()/2.0f));
-	player.push_back(Player(this, "Mr. Wand", BACK, field.getLength()/2.0f));
+	player.push_back(new Player(this, "Mr. Wand", BACK, field.getLength()/2.0f));
 	// Mr. Wand is cheating!
-	player[1].setSize(3.5, 3.5); // *****************
-	player[0].run();
-	player[1].run();
-	output.addMessage(Interface::YOU_SERVE);
-	player[0].attachBall(&ball[0]);
-	output.updateScore(LEFT, 0, player[0].getName(), 0);
-	output.updateScore(RIGHT, 0, player[1].getName(), 0);
+	player[0]->setSize(3.5, 3.5); // *****************
+	player[0]->run();
+	resetScore();
 	output.addMessage(Interface::WAITING_FOR_OPPONENT);
 
 	server = initNetwork(conf.version, conf.playername, conf.port);
-	//loopback = Client::initNetwork(conf.version, "localhost", conf.port, conf.playername);
+	loopback = Client::initNetwork(conf.version, "localhost", conf.port, conf.playername);
 
 	if (server == -1 || loopback == -1)
 		shutdown();
@@ -45,6 +40,8 @@ grapple_server Server::initNetwork(const std::string& version, const std::string
 	grapple_server_session_set(server, name.c_str());
 	grapple_server_start(server);
 
+	//grapple_server_autoping(server, 5.0);
+
 	grapple_error error = grapple_server_error_get(server);
 	if (error != GRAPPLE_NO_ERROR) {
 		std::cerr << "Error starting the client: " << grapple_error_text(error) << std::endl;
@@ -55,12 +52,16 @@ grapple_server Server::initNetwork(const std::string& version, const std::string
 
 void Server::movePaddle(double x, double y, unsigned int time)
 {
+	if (state == UNINITIALIZED)
+		return;
+
 	// we move it ourselves.. the client will report it to the server
-	player[0].move(x, y, time);
+	Player* player = peer[localid].player;
+	player->move(x, y, time);
 	if (state == RUNNING) {
-		Vec2f pos = player[0].getPosition();
+		Vec2f pos = player->getPosition();
 		Buffer sbuf(PADDLEPOSITION);
-		sbuf.pushSide(FRONT);
+		sbuf.pushId(localid);
 		sbuf.pushDouble(pos.y);
 		sbuf.pushDouble(pos.x);
 		sendPacket(sbuf);
@@ -80,18 +81,28 @@ void Server::updateGame(int ticks)
 	}
 }
 
-void Server::score(Side side)
+void Server::resetScore()
+{
+	round = 0;
+	score[0] = score[1] = 0;
+
+	output.updateRound(0);
+	output.updateScore(FRONT, 0);
+	output.updateScore(BACK, 0);
+}
+
+void Server::doScore(Side side)
 {
 	if (ballouttimer == -1)
 	{
 		// we didn't process it already
 		if (side == BACK) {
-			player[0].incScore();
-			output.updateScore(LEFT, 0, player[0].getName(), player[0].getScore());
+			score[0]++;
+			output.updateScore(FRONT, score[0]);
 			output.addMessage(Interface::FLASH_YOU_WIN);
 		} else {
-			player[1].incScore();
-			output.updateScore(RIGHT, 0, player[1].getName(), player[1].getScore());
+			score[1]++;
+			output.updateScore(BACK, score[1]);
 			output.addMessage(Interface::FLASH_YOU_LOST);
 		}
 
@@ -99,8 +110,8 @@ void Server::score(Side side)
 			Buffer sbuf(SCORE);
 			sbuf.pushSide(side);
 			if (side == BACK)
-				sbuf.pushInt(player[0].getScore());
-			else	sbuf.pushInt(player[1].getScore());
+				sbuf.pushInt(score[0]);
+			else	sbuf.pushInt(score[1]);
 			sendPacket(sbuf);
 		}
 		output.updateRound(++round);
@@ -117,7 +128,7 @@ void Server::score(Side side)
 void Server::serveBall()
 {
 	output.removeMessage(Interface::YOU_SERVE);
-	player[0].detachBall(ballspeed);
+	peer[localid].player->detachBall(ballspeed);
 }
 
 void Server::action(Event event)
@@ -125,20 +136,28 @@ void Server::action(Event event)
 	if (event == BALLOUT)
 	{
 		std::cout << "********************************************" << std::endl;
-		// Mr. Wand isn't as good in serving as he is in bouncing the ball
+		/* Mr. Wand isn't as good in serving as he is in bouncing the ball
+		   So as long the game is not running yet, it's always the user who serves
+		*/
 		if ((state == RUNNING)&&((int)floor(round / 5.0) % 2 == 0))
 		{
-			// up till now there can only be one peer; otherwise we had to select wisely
-			player[1].attachBall(&ball[0]);
 			Buffer sbuf(SERVE_BALL);
-			// !! FIXME !!
+			for (std::map<grapple_user, Peer>::iterator i = peer.begin(); i != peer.end(); ++i)
+			{
+				if ((*i).second.player->getSide() == BACK)
+				{
+					sbuf.pushId((*i).first);
+					(*i).second.player->attachBall(&ball[0]);
+					break;
+				}
+			}
 			sendPacket(sbuf);
 		} else {
 			output.addMessage(Interface::YOU_SERVE);
-			player[0].attachBall(&ball[0]);
+			peer[localid].player->attachBall(&ball[0]);
 			if (state == RUNNING) {
-				Buffer sbuf(OPPOSITE_SERVE);
-				// !! FIXME !!
+				Buffer sbuf(SERVE_BALL);
+				sbuf.pushId(localid);
 				sendPacket(sbuf);
 			}
 		}
@@ -156,91 +175,136 @@ void Server::doNetworking()
 		switch (message->type)
 		{
 		case GRAPPLE_MSG_NEW_USER:
-			std::cout << "New user: " << message->NEW_USER.id << std::endl;
+			peer[message->NEW_USER.id] = Peer(grapple_server_client_address_get(server, message->NEW_USER.id));
+			std::cerr << "client connected from " << peer[message->NEW_USER.id].name << std::endl;
 		break;
 		case GRAPPLE_MSG_USER_NAME:
-		  	std::cout << "User " << message->USER_NAME.id << " set name " << message->USER_NAME.name << std::endl;
-			player[1].setName(message->USER_NAME.name);
+		  	std::cout << "User " << peer[message->USER_NAME.id].name << " set name to " << message->USER_NAME.name << std::endl;
+			peer[message->USER_NAME.id].name = message->USER_NAME.name;
 		break;
 		case GRAPPLE_MSG_USER_MSG:
-			std::cout << "Packet!" << std::endl;
 			{
+				grapple_user id = message->USER_MSG.id;
 				Buffer buf((char*)message->USER_MSG.data, message->USER_MSG.length);
 				switch (buf.getType())
 				{
 				case READY:
-					std::cout << "client is ready, alter!" << std::endl;
-					player[1].setScore(0);
-					player[1].setSize(1.0, 1.0);
-					round = 0;
-					// only to be sure
-					output.removeMessage(Interface::YOU_SERVE);
-					player[0].detachBall(0.0);
+					peer[id].ready = true;
 
-					output.removeMessage(Interface::WAITING_FOR_OPPONENT);
-					output.updateRound(round);
-					output.updateScore(RIGHT, 0, player[1].getName(), player[1].getScore());
+					std::cout << "Player " << peer[id].name << " ready!" << std::endl;
+					std::cerr << peer.size() << " players" << std::endl;
+					if (peer.size() > 1) {
+						bool ready = true;
+						for (std::map<grapple_user, Peer>::iterator i = peer.begin(); i != peer.end(); ++i)
+						{
+							if (!(*i).second.ready)
+							{
+								std::cerr << "Player " << (*i).second.name << " is not ready yet :/." << std::endl;
+								ready = false;
+								break;
+							}
+						}
 
-					{
-						Buffer sbuf(READY);
-						sendPacket(sbuf);
-					}
-
-					// it would be cool if our objects would have a reset option
-
-					output.addMessage(Interface::FLASH_GAME_STARTED);
-					state = RUNNING;
-					ballouttimer = addTimer(10, BALLOUT, this);
-
-					{
-						Buffer sbuf;
-						if (paused)
-							sbuf.setType(PAUSE_REQUEST);
-						else	sbuf.setType(RESUME_REQUEST);
-						sendPacket(sbuf);
-					}
-					{
-						Vec2f pos = player[0].getPosition();
-						Buffer sbuf(PADDLEPOSITION);
-						sbuf.pushSide(FRONT);
-						sbuf.pushDouble(pos.y);
-						sbuf.pushDouble(pos.x);
-						sendPacket(sbuf);
+						if (ready)
+							startGame();
 					}
 				break;
 				case PADDLEMOVE:
 					{
 						unsigned int time = buf.popInt();
-						player[1].move(buf.popDouble(), buf.popDouble(), time);
-						Vec2f pos = player[1].getPosition();
+						peer[id].player->move(buf.popDouble(), buf.popDouble(), time);
+						Vec2f pos = peer[id].player->getPosition();
 						Buffer sbuf(PADDLEPOSITION);
-						sbuf.pushSide(BACK);
+						sbuf.pushId(id);
 						sbuf.pushDouble(pos.y);
 						sbuf.pushDouble(pos.x);
 						sendPacket(sbuf);
 					}
 				break;
 				case SERVE_BALL:
-					player[1].detachBall(ballspeed);
+					peer[id].player->detachBall(ballspeed);
 					break;
 				case PAUSE_REQUEST:
 					togglePause(true, true);
-					//std::cout << "Player " << sender->player->getName() << " paused the game." << std::endl;
+					std::cout << "Player " << peer[id].name << " paused the game." << std::endl;
 				break;
 				case RESUME_REQUEST:
 					togglePause(false, true);
-					//std::cout << "Player " << sender->player->getName() << " resumed the game." << std::endl;
+					std::cout << "Player " << peer[id].name << " resumed the game." << std::endl;
 				break;
 				}
 			break;
 			}
 		case GRAPPLE_MSG_USER_DISCONNECTED:
-			std::cout << "User " << message->USER_DISCONNECTED.id << " disconnected!" << std::endl;
+			std::cout << "Player " << peer[message->USER_DISCONNECTED.id].name << " disconnected!" << std::endl;
 			shutdown();
 		break;
 		}
 		grapple_message_dispose(message);
 	}
+	while (grapple_client_messages_waiting(loopback))
+	{
+		message=grapple_client_message_pull(loopback);
+		switch (message->type)
+		{
+		case GRAPPLE_MSG_NEW_USER_ME:
+			{
+				localid = message->NEW_USER.id;
+				peer[localid].player = new Player(this, peer[localid].name, FRONT, field.getLength()/2.0f);
+				player.push_back(peer[localid].player);
+				peer[localid].player->attachBall(&ball[0]);
+				output.addMessage(Interface::YOU_SERVE);
+				peer[localid].ready = true;
+				state = WAITING;
+			}
+			break;
+		}
+		grapple_message_dispose(message);
+	}
+}
+
+void Server::startGame()
+{
+	output.removeMessage(Interface::WAITING_FOR_OPPONENT);
+	resetScore();
+
+	// it could be we are serving at this moment
+	output.removeMessage(Interface::YOU_SERVE);
+	player[0]->detachBall(0.0);
+
+	// create new players
+	delete player[0];	delete player[1];
+	player.clear();
+
+	for (std::map<grapple_user, Peer>::iterator i = peer.begin(); i != peer.end(); ++i)
+	{
+		Side side = (i->first == localid ? FRONT : BACK);
+		i->second.player = new Player(this, i->second.name, side, field.getLength()/2.0f);
+		player.push_back(i->second.player);
+		i->second.player->run();
+	}
+
+	// now we are up & ..
+	state = RUNNING;
+	sendSimplePacket(READY);
+
+	// reset ball in a cool way
+	output.addMessage(Interface::FLASH_GAME_STARTED);
+	ballouttimer = addTimer(10, BALLOUT, this);
+
+	// tell pause state
+	if (paused)
+		sendSimplePacket(PAUSE_REQUEST);
+	else
+		sendSimplePacket(RESUME_REQUEST);
+
+	// tell our initial position
+	Vec2f pos = peer[localid].player->getPosition();
+	Buffer sbuf(PADDLEPOSITION);
+	sbuf.pushId(localid);
+	sbuf.pushDouble(pos.y);
+	sbuf.pushDouble(pos.x);
+	sendPacket(sbuf);
 }
 
 void Server::sendPacket(Buffer& data)

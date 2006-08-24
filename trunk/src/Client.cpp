@@ -61,17 +61,12 @@ void Client::updateGame(int ticks)
 	// we will test here for timeouts from the server ... perhaps!
 }
 
-void Client::score(Side side)
-{
-}
-
 void Client::serveBall()
 {
 	if (state == RUNNING)
 	{
 		output.removeMessage(Interface::YOU_SERVE);
-		Buffer sbuf(SERVE_BALL);
-		sendPacket(sbuf);
+		sendSimplePacket(SERVE_BALL);
 	}
 }
 
@@ -85,17 +80,16 @@ void Client::doNetworking()
 		switch (message->type)
 		{
 		case GRAPPLE_MSG_NEW_USER:
-			std::cout << "New user: " << message->NEW_USER.id << std::endl;
+			peer[message->NEW_USER.id] = Peer("Unnamed");
 			break;
 		case GRAPPLE_MSG_NEW_USER_ME:
-			std::cout << "I am " << message->NEW_USER.id << std::endl;
-			{
-				Buffer sbuf(READY);
-				sendPacket(sbuf);
-			}
+			peer[message->NEW_USER.id] = Peer("Local Player");
+			localid = message->NEW_USER.id;
+			sendSimplePacket(READY);
 			break;
 		case GRAPPLE_MSG_USER_NAME:
 		  	std::cout << "User " << message->USER_NAME.id << " set name " << message->USER_NAME.name << std::endl;
+			peer[message->USER_NAME.id].name = message->USER_NAME.name;
 			break;
 		case GRAPPLE_MSG_SESSION_NAME:
 			std::cout << "Game name is " << message->SESSION_NAME.name << std::endl;
@@ -109,22 +103,24 @@ void Client::doNetworking()
 				{
 				case READY:
 					ball.push_back(Ball(this));
-					player.push_back(Player(this, playername, FRONT, field.getLength()/2.0f));
-					player.push_back(Player(this, "bla", BACK, field.getLength()/2.0f));
-					player[0].run();
-					player[1].run();
-					output.updateScore(LEFT, 0, player[0].getName(), 0);
-					output.updateScore(RIGHT, 0, player[1].getName(), 0);
+
+					for (std::map<grapple_user, Peer>::iterator i = peer.begin(); i != peer.end(); ++i)
+					{
+						Side side = (i->first == localid ? FRONT : BACK);
+						i->second.player = new Player(this, i->second.name, side, field.getLength()/2.0f);
+						player.push_back(i->second.player);
+						i->second.player->run();
+					}
+					output.updateScore(FRONT, 0);
+					output.updateScore(BACK, 0);
 					output.addMessage(Interface::FLASH_GAME_STARTED);
 					state = RUNNING;
 				break;
 				case PAUSE_REQUEST:
 					togglePause(true, true);
-				//	std::cout << "Player " << sender->player->getName() << " paused the game." << std::endl;
 				break;
 				case RESUME_REQUEST:
 					togglePause(false, true);
-				//	std::cout << "Player " << sender->player->getName() << " resumed the game." << std::endl;
 				break;
 				case ROUND:
 					output.updateRound(buf.popInt());
@@ -132,16 +128,11 @@ void Client::doNetworking()
 				case SCORE:
 					{
 						Side side = buf.popSide();
+						output.updateScore(side, buf.popInt());
 						if (side == BACK)
-						{
-							player[1].setScore(buf.popInt());
-							output.updateScore(RIGHT, 0, player[1].getName(), player[1].getScore());
 							output.addMessage(Interface::FLASH_YOU_LOST);
-						} else {
-							player[0].setScore(buf.popInt());
-							output.updateScore(LEFT, 0, player[0].getName(), player[0].getScore());
+						else
 							output.addMessage(Interface::FLASH_YOU_WIN);
-						}
 						ball[0].shrink(1000);
 					}
 				break;
@@ -155,20 +146,17 @@ void Client::doNetworking()
 				break;
 				case PADDLEPOSITION:
 					{
-						Side side = buf.popSide();
-						if (side == BACK) {
-							player[0].setPosition(-buf.popDouble(), buf.popDouble());
-						} else {
-							player[1].setPosition(-buf.popDouble(), buf.popDouble());
-						}
+						grapple_user id = buf.popId();
+						if (peer[id].player != NULL)
+							peer[id].player->setPosition(-buf.popDouble(), buf.popDouble());
+						else
+							std::cerr << "Fatal: Wanted to access uninitialized player " << peer[id].name << std::endl;
 					}
 				break;
 				case SERVE_BALL:
 					ball[0].grow(500);
-					output.addMessage(Interface::YOU_SERVE);
-				break;
-				case OPPOSITE_SERVE:
-					ball[0].grow(500);
+					if (buf.popId() == localid)
+						output.addMessage(Interface::YOU_SERVE);
 				break;
 				}
 			}
@@ -182,6 +170,7 @@ void Client::doNetworking()
 			break;
 		case GRAPPLE_MSG_CONNECTION_REFUSED:
 			std::cout << "I'm not allowed!" << std::endl;
+			shutdown();
 			break;
 		case GRAPPLE_MSG_PING:
 			std::cout << "Pingtime of " << message->PING.id << " is " << message->PING.pingtime << std::endl;

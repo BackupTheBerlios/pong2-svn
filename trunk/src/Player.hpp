@@ -4,6 +4,7 @@
 #include <string>
 #include "stuff.hpp"
 #include "Ball.hpp"
+#include "grapple/grapple.h"
 
 class Framework;
 
@@ -28,19 +29,15 @@ public:
 
 	//! returns the player name
 	inline const std::string& getName() { return name; }
-	//! returns the actual score
-	inline int getScore() { return score; }
 	//! returns FRONT or BACK
 	inline Side getSide() { return side; }
 	//! returns the actual position on the X and Y axis
 	inline Vec2f getPosition() { return Vec2f(position.x, position.y); }
 
+	inline grapple_user getID() { return id; }
+
 	//! set a new name
 	inline void setName(const std::string& nick) { name = nick; }
-	//! set a new score
-	inline void setScore(int points) { score = points; }
-	//! increase the score
-	inline void incScore() { score++; }
 
 	//! set the paddle size
 	/*! used to let Mr. Wand cheat
@@ -107,8 +104,6 @@ private:
 
 	//! player nickname
 	std::string name;
-	//! actual score
-	int score;
 	//! wether the paddle is in the FRONT or in the BACK
 	Side side;
 	//! the position; saving both the dynamic X, Y coords and the predefined Z coord
@@ -131,6 +126,8 @@ private:
 
 	//! timestamp in ticks of the last movement
 	unsigned int lastmove;
+
+	grapple_user id;
 };
 
 #endif

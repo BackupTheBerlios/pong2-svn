@@ -86,31 +86,6 @@ struct Collision {
 	void *opponent;
 };
 
-//! a player connected over the network
-struct Peer {
-	//! the constructor
-	/*!	\param h the IP address
-	*/
-	inline Peer(unsigned int h) : host(h)
-	{
-		// we could lookup the dns record here, we're satisfied with a good formatted ip adress
-		// the address provided as an unsigend integer in network byte order is splitted to 4 byte values
-		unsigned int i1 = (host / 65536)&0xffff;
-		unsigned int i2 = host - i1*65536;
-		std::stringstream x;
-		x << (i2&0xff) << '.' << (i2>>8) << '.' << (i1&0xff) << '.' << (i1>>8);
-		hostname = x.str();
-	}
-	//! the IP address
-	unsigned int host;
-	//! the host's address in a readable format (or perhaps DNS name)
-	std::string hostname;
-	//! the associated Player object, if there is any
-	Player* player;
-
-	// saving lastping ticks and others would be a good idea at this position
-};
-
 //! Any object which can receive timer triggered events
 struct EventReceiver {
 	//! the events descriptor

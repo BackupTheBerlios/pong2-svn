@@ -3,6 +3,7 @@
 
 #include "stuff.hpp"
 #include <string>
+#include "grapple/grapple.h"
 
 //! the type of a network packet
 enum Type {
@@ -23,9 +24,7 @@ enum Type {
 	//! server telling the actual round
 	ROUND,
 	//! demanding and reporting the ball to be served
-	SERVE_BALL,
-	//! reporting the client that the ball is served by the server's player
-	OPPOSITE_SERVE,
+	SERVE_BALL
 };
 
 //! Used to manage any incoming packet or create an outgoing packet
@@ -55,6 +54,8 @@ public:
 	//! add a double value to the packet
 	/*! \param value the value itself */
 	void pushDouble(double value);
+
+	void pushId(grapple_user value);
 	//! add a Side value to the packet
 	/*! \param value the value itself */
 	void pushSide(Side value);
@@ -69,6 +70,8 @@ public:
 	//! collect a double value from the packet
 	/*! \result the value itself */
 	double popDouble();
+
+	grapple_user popId();
 
 	//! collect a Side value from the packet
 	/*! \result the value itself */
