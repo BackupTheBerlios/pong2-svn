@@ -8,11 +8,11 @@ class Player;
 //! the game configuration, which can mostly be altered by command line settings
 struct Configuration {
 	//! the constructor preinitializing default values
-	inline Configuration() : version(8),
+	inline Configuration() : version("9"),
 		width(1024), height(768), bpp(32), fullscreen(false),
 		playername("Hans"), mode(SERVER), servername(""), port(6642) {}
-	//! the game's network protocol version
-	int version;
+	//! the game's network protocol version (libgrapple wants a string here)
+	std::string version;
 	//! the screen size in pixels
 	int width, height;
 	//! the desired bits per pixel value (only used if available)

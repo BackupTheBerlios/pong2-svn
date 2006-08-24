@@ -6,16 +6,8 @@
 
 //! the type of a network packet
 enum Type {
-	//! client asking for a server with version
-	HELO,
-	//! server responding it is full
-	SERVER_FULL,
-	//! server responding wrong version
-	VERSION_MISMATCH,
-	//! server responding ready for the game
+	//! client or server responding ready for the game
 	READY,
-	//! telling a player's name
-	PLAYERNAME,
 	//! requesting paused state
 	PAUSE_REQUEST,
 	//! requesting non-paused state
@@ -34,8 +26,6 @@ enum Type {
 	SERVE_BALL,
 	//! reporting the client that the ball is served by the server's player
 	OPPOSITE_SERVE,
-	//! telling one left the game
-	QUIT,
 };
 
 //! Used to manage any incoming packet or create an outgoing packet

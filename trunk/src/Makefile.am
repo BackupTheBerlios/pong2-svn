@@ -1,11 +1,11 @@
-SUBDIRS = net
+SUBDIRS = grapple
 
 bin_PROGRAMS = pong2
 
-pong2_DEPENDENCIES = net/libnet2.a
+pong2_DEPENDENCIES = grapple/libgrapple.a
 
 pong2_LDADD = \
-$(top_srcdir)/src/net/libnet2.a \
+$(top_srcdir)/src/grapple/libgrapple.a \
 @LIBS@
 
 pong2_SOURCES = \

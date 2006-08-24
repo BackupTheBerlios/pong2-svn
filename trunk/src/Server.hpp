@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include "Framework.hpp"
+#include "grapple/grapple.h"
 
 //! The Server is not only a network listening server but actually master of the gameflow.
 /*! Even if this were a single player game (well, it's kind of hard against Mr. Wand)
@@ -21,6 +22,8 @@ public:
 	   Note that due to the atexit() registration this will lead to a proper deinitialization of SDL & others.
 	*/
 	~Server();
+
+	static grapple_server initNetwork(const std::string& version, const std::string& name, const unsigned short port);
 
 private:
 	//! process the player's desire to move on
@@ -51,13 +54,9 @@ private:
 	//! let the player kickoff the ball
 	void serveBall();
 
-	//! process an incoming network packet
-	/*! parses the packet and takes the appropriate actions
-		\param sender the packet's originator
-		\param data not NULL terminated char array with the data
-		\param size the size of the data
-	*/
-	void receivePacket(Peer* sender, char* data, int size);
+	void doNetworking();
+
+	void sendPacket(Buffer& data);
 
 	//! descriptor (index) of the timer used when the ball flies out after a score
 	int ballouttimer;
@@ -68,6 +67,9 @@ private:
 	/*! Not only shown by Interface but also used to calculate who is the one to serve the ball next
 	    Every player gets 5 serves at a time. */
 	int round;
+
+	grapple_server server;
+	grapple_client loopback;
 };
 
 #endif

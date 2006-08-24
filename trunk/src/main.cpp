@@ -25,11 +25,11 @@
 void Quit(void)
 {
 	/* shutdown net2 */
-	NET2_Quit();
+	//NET2_Quit();
 	// FE_Quit();
 
 	/* shutdown sdlnet which was used by net2 */
-	SDLNet_Quit();
+	//SDLNet_Quit();
 	/* clean up the window */
 	SDL_Quit();
 }
@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 	SDL_WM_SetCaption("Pong²", NULL);
 
 	/* Initialize the networking - net2 is based on sdlnet */
-	if (SDLNet_Init() == -1)
+	/*if (SDLNet_Init() == -1)
 	{
 		std::cerr << "Can't initialize networking (Stage 1): " << SDLNet_GetError() << std::endl;
 		exit(EXIT_FAILURE);
@@ -113,7 +113,7 @@ int main (int argc, char **argv)
 	{
 		std::cerr << "Can't initialize networking (Stage 2): " << NET2_GetError() << std::endl;
 		exit(EXIT_FAILURE);
-	}
+	}*/
 
 	/* create the Server or Client object which controls the game */
 	if (conf.mode == Configuration::SERVER)

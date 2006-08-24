@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "SDL.h"
-#include "net/net2.h"
 #include <GL/gl.h>
 
 #include "stuff.hpp"
@@ -14,6 +13,7 @@
 #include "Ball.hpp"
 #include "Player.hpp"
 #include "Camera.hpp"
+#include "Buffer.hpp"
 
 class Ball;
 
@@ -112,24 +112,10 @@ protected:
 	*/
 	void togglePause(bool pause, bool external);
 
-	//! opens an udp socket on the listening port
-	/*! The Clients listening port is the configured port number + 1.
-	    Shuts the game down on failure.
-	*/
-	void startListen();
+	//! process message queue, send periodical packages, called by loop()
+	virtual void doNetworking()=0;
 
-	//! send a packet to a connected player
-	/*!	\param receiver pointer to the receiver's data (host)
-		\param data the data to be sent as NOT null terminated char array
-		\param size the size of the data array in bytes
-	*/
-	void sendPacket(Peer* receiver, char* data, int size);
-
-	//! resolves a hostname and creates an according peer
-	/*!	\param hostname the host's dns name or ip address
-		\result the created Peer structure on success, otherwise NULL
-	*/
-	Peer* resolveHost(const std::string& hostname);
+	virtual void sendPacket(Buffer& data)=0;
 
 	//! vector holding all connected peers
 	/*! Actually we only support one connection. This can be extended in future.
@@ -157,13 +143,6 @@ protected:
 	*/
 	std::vector<Player> player;
 
-	//! our actual networking protocol version
-	unsigned int version;
-
-	//! the UDP port number to listen on
-	unsigned short listenport;
-	//! the UDP port number to send packets to
-	unsigned short sendport;
 	//! pause state
 	/*! Is 0 if not paused and otherwise holds the ticks (ms) which need to be processed after the pause. */
 	unsigned int paused;
@@ -193,16 +172,6 @@ private:
 	virtual void score(Side side)=0;
 	//! serve the ball, i.e. the player wants to kick it off, called by loop()
 	virtual void serveBall()=0;
-
-	//! process an incoming packet, called by loop()
-	virtual void receivePacket(Peer* sender, char* data, int size)=0;
-
-	//! try to find a peer, if not found, create it
-	/*! This one's called by loop() whenever a packet arrives. It's helpful to know who sent the packet.
-		\param host the host ip address of the peer
-		\result pointer to the found/created Peer
-	*/
-	Peer* getCreatePeer(unsigned int host);
 
 	/*! the SDL video surface */
 	SDL_Surface *surface;

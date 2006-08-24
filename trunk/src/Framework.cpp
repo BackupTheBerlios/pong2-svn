@@ -2,14 +2,13 @@
 #include <iostream>
 #include "Framework.hpp"
 #include "Interface.hpp"
-#include "Buffer.hpp"
 #include <math.h>
 #include "SDL_image.h"
 
 
 Framework::Framework(void *surf, const Configuration& conf, Networkstate initial)
- : field(this), output(this), surface((SDL_Surface*)surf), version(conf.version),
-   paused(1), timeunit(1), lasttime(SDL_GetTicks()), frames(0), state(initial), xdiff(0), camera(conf.width, conf.height)
+ : field(this), output(this), surface((SDL_Surface*)surf),
+   paused(1), timeunit(7), lasttime(SDL_GetTicks()), frames(0), state(initial), xdiff(0), camera(conf.width, conf.height)
 {
 	/* initialize OpenGL */
 	resetGL();
@@ -20,7 +19,7 @@ Framework::Framework(void *surf, const Configuration& conf, Networkstate initial
 	if (conf.fullscreen) SDL_WM_ToggleFullScreen(surface);
 
 	/* set unpaused state (grab input) */
-	togglePause(false, false);
+	togglePause(false, true);
 }
 
 Framework::~Framework()
@@ -65,33 +64,16 @@ void Framework::loop()
 				done = true;
 				break;
 			case SDL_USEREVENT:
-				switch (event.user.code)
+				if (((TimerData*)event.user.data1)->timer == NULL)
 				{
-				case NET2_EXTERNAL:
-					if (((TimerData*)event.user.data1)->timer == NULL)
-					{
-						/* this means our timer has gone inactive and we are pleased to stop our work! */
-					} else {
-						((TimerData*)event.user.data1)->receiver->action(((TimerData*)event.user.data1)->event);
-					}
-					break;
-				case NET2_ERROREVENT:
-					printf("Error: %s(%d)\n", NET2_GetEventError(&event), NET2_GetSocket(&event));
-					break;
-				case NET2_UDPRECEIVEEVENT:
-					UDPpacket *p = NULL;
-					p = NET2_UDPRead(NET2_GetSocket(&event));
-					while (p != NULL) // if we get NULL we are done
-					{
-						Peer* peer = getCreatePeer(p->address.host);
-						receivePacket(peer, (char*)p->data, p->len);
-						NET2_UDPFreePacket(p);
-						p = NET2_UDPRead(NET2_GetSocket(&event));
-					}
-					break;
+					/* this means our timer has gone inactive and we are pleased to stop our work! */
+				} else {
+					((TimerData*)event.user.data1)->receiver->action(((TimerData*)event.user.data1)->event);
 				}
+				break;
 			}
 		}
+		doNetworking();
 
 		int tdiff = SDL_GetTicks() - lasttime;
 		if (tdiff > timeunit) {
@@ -181,7 +163,7 @@ void Framework::togglePause(bool pause, bool external)
 		sbuf.setType(RESUME_REQUEST);
 	}
 	if (!external)
-		for (int i = 0; i < peer.size(); i++) sendPacket(&peer[i], sbuf.getData(), sbuf.getSize());
+		sendPacket(sbuf);
 }
 
 /* function to load in bitmap as a GL texture */
@@ -201,7 +183,7 @@ GLuint Framework::loadTexture(const std::string& filename)
 		*/
 		SDL_PixelFormat format;
 		format.palette = NULL;
-		format.BitsPerPixel= 24;	format.BytesPerPixel= 3;
+		format.BitsPerPixel= 24;
 		format.Rshift= 16;	format.Gshift= 8;	format.Bshift= 0;
 		format.Rmask= 0xff<<16;	format.Gmask= 0xff<<8;	format.Bmask= 0xff;
 
@@ -414,20 +396,18 @@ void Framework::drawScene()
 
 Collision* Framework::detectCol(const Vec3f& position, const Vec3f& speed, double radius)
 {
-	Collision* col = new Collision;
+	Collision* col;
 
 	// test against walls
 	col = field.detectCol(position, speed, radius);
 	if (col != NULL) return col;
 
 	// detection for paddles
-	col = player[0].detectCol(position, speed, radius);
-	if (col != NULL) return col;
-
-	col = player[1].detectCol(position, speed, radius);
-	if (col != NULL) return col;
-
-	delete col;
+	for (int i = 0; i < player.size(); i++)
+	{
+		col = player[i].detectCol(position, speed, radius);
+		if (col != NULL) return col;
+	}
 
 	// wether the ball is still inside?
 	Side side = field.zOutside(position.z);
@@ -472,55 +452,9 @@ unsigned int processTimer(unsigned int intervall, void* data)
 {
 	SDL_Event event;
 	event.type= SDL_USEREVENT;
-	// we have to assure that this is not a net2 used one
-	event.user.code = NET2_EXTERNAL;
 	event.user.data1 = data;
 	SDL_PushEvent(&event);
 	return intervall;
-}
-
-void Framework::startListen()
-{
-	if (NET2_UDPAcceptOn(listenport, 128) == -1)
-	{
-		std::cerr << "Couldn't open UDP port " << listenport << " for listening!" << std::endl;
-		std::cerr << "This is necessary for networking! You can try another port number with -p" << std::endl;
-		shutdown();
-	}
-}
-
-Peer* Framework::getCreatePeer(unsigned int host)
-{
-	for (int i = 0; i < peer.size(); i++)
-		if (peer[i].host == host)
-			return &peer[i];
-
-	peer.push_back(Peer(host));
-	std::cout << "Peer connected from " << peer.back().hostname << std::endl;
-	return &(peer.back());
-}
-
-Peer* Framework::resolveHost(const std::string& hostname)
-{
-	IPaddress ip;
-	if (NET2_ResolveHost(&ip, (char*)hostname.c_str(), sendport) != -1)
-	{
-		peer.push_back(Peer(ip.host));
-		std::cout << "Server resolved at " << peer.back().hostname << std::endl;
-		return &(peer.back());
-	} else return NULL;
-}
-
-void Framework::sendPacket(Peer* receiver, char* data, int size)
-{
-	unsigned short shorty;
-	// we need the port number in network byte order, otherwise it would be the wrong port
-	SDLNet_Write16(sendport, &shorty);
-	IPaddress ip = {
-		receiver->host,
-		shorty
-	};
-	NET2_UDPSend(&ip, data, size);
 }
 
 void Framework::shutdown()

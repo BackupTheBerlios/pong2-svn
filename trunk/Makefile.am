@@ -1,5 +1,7 @@
+ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = dist-bzip2
 SUBDIRS = src data
 
-dist_pkgdata_DATA = \
-doxygen.conf
+EXTRA_DIST = \
+doxygen.conf \
+m4

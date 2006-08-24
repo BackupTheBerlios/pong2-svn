@@ -18,8 +18,19 @@ AC_HEADER_STDC
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
-dnl Check for headers
-# AC_CHECK_HEADERS([jpeglib.h])
+dnl Check for pthreads
+ACX_PTHREAD(have_pthreads=yes, have_pthreads=no)
+
+dnl Check for SSL
+AC_CHECK_HEADER([openssl/ssl.h], CFLAGS="$CFLAGS -DSOCK_SSL" LIBS="$LIBS -lssl",)
+
+if [[ "x$have_pthreads" = "xyes" ]]; then
+  LIBS="$PTHREAD_LIBS $LIBS"
+  CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+  CC="$PTHREAD_CC"
+else
+  AC_MSG_ERROR([cannot find pthreads])
+fi
 
 dnl Checks for libraries.
 AC_CHECK_LIB([GL], [glBegin],, AC_MSG_ERROR([Error! You do not have OpenGL
@@ -28,11 +39,9 @@ installed. You will not be able to play this game.]))
 AC_CHECK_LIB([GLU], [gluLookAt],, AC_MSG_ERROR([Error! You do not have OpenGL
 installed. You will not be able to play this game.]))
 
-# AC_CHECK_LIB([jpeg], [jpeg_start_compress],, AC_MSG_ERROR([libjpeg not found!]))
-
-AC_CHECK_LIB([SDL_net], [SDLNet_Init],, AC_MSG_ERROR([Error! You need
-SDL_net. Check out http://www.libsdl.org/projects/SDL_net/ for
-more info.]))
+# AC_CHECK_LIB([SDL_net], [SDLNet_Init],, AC_MSG_ERROR([Error! You need
+# SDL_net. Check out http://www.libsdl.org/projects/SDL_net/ for
+# more info.]))
 
 # AC_CHECK_LIB([SDL_ttf], [TTF_OpenFont],, AC_MSG_ERROR([Error! You need SDL_ttf.
 # Check out http://www.libsdl.org/projects/SDL_ttf/ for more info.]))
@@ -50,4 +59,4 @@ LIBS="$LIBS $SDL_LIBS"
 
 dnl Checks for library functions.
 
-AC_OUTPUT([Makefile src/Makefile src/net/Makefile data/Makefile])
+AC_OUTPUT([Makefile src/Makefile src/grapple/Makefile data/Makefile])
