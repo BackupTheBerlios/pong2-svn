@@ -4,4 +4,5 @@ SUBDIRS = src data
 
 EXTRA_DIST = \
 doxygen.conf \
+icon.png \
 m4

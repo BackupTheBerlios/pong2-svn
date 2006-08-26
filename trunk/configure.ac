@@ -53,8 +53,7 @@ SDL_VERSION=1.2.4
 AM_PATH_SDL($SDL_VERSION,:,
 			AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
 dnl CFLAGS="$CFLAGS $SDL_CFLAGS"
-CFLAGS="$CFLAGS $SDL_CFLAGS -DPATH_PREFIX=\\\"\$(datadir)/\$(PACKAGE)/\\\""
-CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS $SDL_CFLAGS -DPATH_PREFIX=\\\"\$(datadir)/\$(PACKAGE)/\\\""
 LIBS="$LIBS $SDL_LIBS"
 
 dnl Checks for library functions.
