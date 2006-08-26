@@ -55,9 +55,11 @@ private:
 	//! let the player kickoff the ball
 	void serveBall();
 
+	void ping();
+
 	void doNetworking();
 
-	void sendPacket(Buffer& data);
+	void sendPacket(Buffer& data, bool reliable);
 
 	void startGame();
 

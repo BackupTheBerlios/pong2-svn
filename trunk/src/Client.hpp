@@ -33,12 +33,6 @@ private:
 	*/
 	void movePaddle(double x, double y, unsigned int time);
 
-	//! ping the server or whatever
-	/*! As we don't have any work we use this regular call as an opportunity to manage our connection.
-	    We could ping the server here to test the connection. Actually we only use it to send regular HELO packages
-	    until we finally get connected. Therefore, the server can be started even if the client already is waiting.
-		\param ticks elapsed time since the last call
-	*/
 	void updateGame(int ticks);
 
 	//! unused, see Server
@@ -47,16 +41,15 @@ private:
 	//! let the player kickoff the ball (notifies the Server)
 	void serveBall();
 
+	void ping();
+
 	//! process messaging queue and send periodical (ping) packages
 	void doNetworking();
 
-	void sendPacket(Buffer& data);
+	void sendPacket(Buffer& data, bool reliable);
 
 	//! temporary placeholder for the player's name until the Player object is created (while data is transmitted)
 	std::string playername;
-
-	//! count of ticks (ms) since the last ping / sent HELO packet
-	unsigned int ping;
 
 	//! libgrapple client object, used for network communication
 	grapple_client client;

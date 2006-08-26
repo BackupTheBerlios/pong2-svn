@@ -64,7 +64,7 @@ void Server::movePaddle(double x, double y, unsigned int time)
 		sbuf.pushId(localid);
 		sbuf.pushDouble(pos.y);
 		sbuf.pushDouble(pos.x);
-		sendPacket(sbuf);
+		sendPacket(sbuf, false);
 	}
 }
 
@@ -76,7 +76,7 @@ void Server::updateGame(int ticks)
 			Buffer sbuf(BALLPOSITION);
 			const Vec3f& pos = ball[0].getPosition();
 			sbuf.pushDouble(pos.x); sbuf.pushDouble(pos.y); sbuf.pushDouble(pos.z);
-			sendPacket(sbuf);
+			sendPacket(sbuf, false);
 		}
 	}
 }
@@ -112,13 +112,13 @@ void Server::doScore(Side side)
 			if (side == BACK)
 				sbuf.pushInt(score[0]);
 			else	sbuf.pushInt(score[1]);
-			sendPacket(sbuf);
+			sendPacket(sbuf, true);
 		}
 		output.updateRound(++round);
 		if (state == RUNNING) {
 			Buffer sbuf(ROUND);
 			sbuf.pushInt(round);
-			sendPacket(sbuf);
+			sendPacket(sbuf, true);
 		}
 		ballouttimer = addTimer(1000, BALLOUT, this);
 		ball[0].shrink(1000);
@@ -151,20 +151,24 @@ void Server::action(Event event)
 					break;
 				}
 			}
-			sendPacket(sbuf);
+			sendPacket(sbuf, true);
 		} else {
 			output.addMessage(Interface::YOU_SERVE);
 			peer[localid].player->attachBall(&ball[0]);
 			if (state == RUNNING) {
 				Buffer sbuf(SERVE_BALL);
 				sbuf.pushId(localid);
-				sendPacket(sbuf);
+				sendPacket(sbuf, true);
 			}
 		}
 		removeTimer(ballouttimer);
 		ballouttimer = -1;
 	}
 }
+
+
+// the client sends the ping
+void Server::ping() {}
 
 void Server::doNetworking()
 {
@@ -179,7 +183,6 @@ void Server::doNetworking()
 			std::cerr << "client connected from " << peer[message->NEW_USER.id].name << std::endl;
 		break;
 		case GRAPPLE_MSG_USER_NAME:
-		  	std::cout << "User " << peer[message->USER_NAME.id].name << " set name to " << message->USER_NAME.name << std::endl;
 			peer[message->USER_NAME.id].name = message->USER_NAME.name;
 		break;
 		case GRAPPLE_MSG_USER_MSG:
@@ -191,15 +194,12 @@ void Server::doNetworking()
 				case READY:
 					peer[id].ready = true;
 
-					std::cout << "Player " << peer[id].name << " ready!" << std::endl;
-					std::cerr << peer.size() << " players" << std::endl;
 					if (peer.size() > 1) {
 						bool ready = true;
 						for (std::map<grapple_user, Peer>::iterator i = peer.begin(); i != peer.end(); ++i)
 						{
 							if (!(*i).second.ready)
 							{
-								std::cerr << "Player " << (*i).second.name << " is not ready yet :/." << std::endl;
 								ready = false;
 								break;
 							}
@@ -218,7 +218,7 @@ void Server::doNetworking()
 						sbuf.pushId(id);
 						sbuf.pushDouble(pos.y);
 						sbuf.pushDouble(pos.x);
-						sendPacket(sbuf);
+						sendPacket(sbuf, false);
 					}
 				break;
 				case SERVE_BALL:
@@ -304,10 +304,10 @@ void Server::startGame()
 	sbuf.pushId(localid);
 	sbuf.pushDouble(pos.y);
 	sbuf.pushDouble(pos.x);
-	sendPacket(sbuf);
+	sendPacket(sbuf, false);
 }
 
-void Server::sendPacket(Buffer& data)
+void Server::sendPacket(Buffer& data, bool reliable)
 {
-	grapple_server_send(server, GRAPPLE_EVERYONE, GRAPPLE_RELIABLE, data.getData(), data.getSize());
+	grapple_server_send(server, GRAPPLE_EVERYONE, reliable * GRAPPLE_RELIABLE, data.getData(), data.getSize());
 }

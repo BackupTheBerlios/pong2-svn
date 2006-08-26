@@ -44,6 +44,10 @@ public:
 	/*! \param r the actual game round
 	*/
 	void updateRound(int r);
+	//! update the shown ping time
+	/*! \param ping latest ping measurement
+	*/
+	void updatePing(double ping);
 	//! update the shown fps
 	/*! \param frames recently achieved Frames Per Second
 	*/
@@ -67,7 +71,7 @@ public:
 	/*! \param cruel wether or not to use cruel stuff to make it look nice for PAUSED mode
 	*/
 	void drawBackground(bool cruel);
-	//! draw the FPS counter onto the screen
+	//! draw the FPS counter and ping time onto the screen
 	void drawFPS();
 	//! draw the round number onto the screen
 	void drawRound();
@@ -117,6 +121,8 @@ private:
 	bool paused;
 	//! actual round string
 	std::string roundnum;
+	//! actual ping string
+	std::string ping;
 	//! actual fps string
 	std::string fps;
 	//! scores to be shown

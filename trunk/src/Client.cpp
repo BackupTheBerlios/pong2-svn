@@ -3,7 +3,7 @@
 #include <sstream>
 
 Client::Client(void *surf, const Configuration& conf)
- : Framework(surf, conf, CONNECTING), playername(conf.playername), ping(0)
+ : Framework(surf, conf, CONNECTING), playername(conf.playername)
 {
 	client = initNetwork(conf.version, conf.servername, conf.port, conf.playername);
 	if (client == -1)
@@ -15,7 +15,7 @@ Client::Client(void *surf, const Configuration& conf)
 
 Client::~Client()
 {
-	grapple_client_destroy(client);
+	if (state != CONNECTING) grapple_client_destroy(client);
 	exit(0);
 }
 
@@ -45,21 +45,12 @@ void Client::movePaddle(double x, double y, unsigned int time)
 		sbuf.pushInt(time);
 		sbuf.pushDouble(y);
 		sbuf.pushDouble(-x);
-		sendPacket(sbuf);
+		sendPacket(sbuf, false);
 	}
 }
 
-void Client::updateGame(int ticks)
-{
-	if (state == CONNECTING) {
-		ping += ticks;
-		if (ping >= 1000)
-		{
-			ping = 0;
-		}
-	}
-	// we will test here for timeouts from the server ... perhaps!
-}
+// nothing to do here on the client side
+void Client::updateGame(int ticks) {}
 
 void Client::serveBall()
 {
@@ -68,6 +59,11 @@ void Client::serveBall()
 		output.removeMessage(Interface::YOU_SERVE);
 		sendSimplePacket(SERVE_BALL);
 	}
+}
+
+void Client::ping()
+{
+	grapple_client_ping(client);
 }
 
 void Client::doNetworking()
@@ -88,11 +84,9 @@ void Client::doNetworking()
 			sendSimplePacket(READY);
 			break;
 		case GRAPPLE_MSG_USER_NAME:
-		  	std::cout << "User " << message->USER_NAME.id << " set name " << message->USER_NAME.name << std::endl;
 			peer[message->USER_NAME.id].name = message->USER_NAME.name;
 			break;
 		case GRAPPLE_MSG_SESSION_NAME:
-			std::cout << "Game name is " << message->SESSION_NAME.name << std::endl;
 			state = TRANSMITTING_DATA;
 			output.removeMessage(Interface::CONNECTING);
 		break;
@@ -162,25 +156,36 @@ void Client::doNetworking()
 			}
 			break;
 		case GRAPPLE_MSG_USER_DISCONNECTED:
-			std::cout << "User " << message->USER_DISCONNECTED.id << " disconnected!" << std::endl;
 			break;
 		case GRAPPLE_MSG_SERVER_DISCONNECTED:
-			std::cout << "Server lost!" << std::endl;
+			if (state == CONNECTING)
+				std::cout << "Unable to connect! (no answer - is the server running?)" << std::endl;
+			else
+				std::cout << "Server disconnected!" << std::endl;
 			shutdown();
 			break;
 		case GRAPPLE_MSG_CONNECTION_REFUSED:
-			std::cout << "I'm not allowed!" << std::endl;
+			std::cout << "Connection refused:\t";
+			switch (message->CONNECTION_REFUSED.reason)
+			{
+			case GRAPPLE_NOCONN_VERSION_MISMATCH:
+				std::cout << "Wrong network protocol version. (see pong2 -v)" << std::endl;
+			case GRAPPLE_NOCONN_SERVER_FULL:
+				std::cout << "The server is already full. :-(" << std::endl;
+			case GRAPPLE_NOCONN_SERVER_CLOSED:
+				std::cout << "The server is closed at the moment." << std::endl;
+			}
 			shutdown();
 			break;
 		case GRAPPLE_MSG_PING:
-			std::cout << "Pingtime of " << message->PING.id << " is " << message->PING.pingtime << std::endl;
+			if (message->PING.id == localid) output.updatePing(message->PING.pingtime);
 			break;
 		}
 		grapple_message_dispose(message);
 	}
 }
 
-void Client::sendPacket(Buffer& data)
+void Client::sendPacket(Buffer& data, bool reliable)
 {
-	grapple_client_send(client, GRAPPLE_SERVER, GRAPPLE_RELIABLE, data.getData(), data.getSize());
+	grapple_client_send(client, GRAPPLE_SERVER, reliable * GRAPPLE_RELIABLE, data.getData(), data.getSize());
 }

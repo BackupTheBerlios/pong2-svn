@@ -6,9 +6,11 @@
 #include "grapple/grapple.h"
 
 //! the type of a network packet
-enum Type {
+enum PacketType {
 	//! client or server responding ready for the game
 	READY,
+	//! clients annulating ready state
+	UNREADY,
 	//! requesting paused state
 	PAUSE_REQUEST,
 	//! requesting non-paused state
@@ -35,7 +37,7 @@ public:
 	Buffer();
 	//! constructor with type for an outgoing packet
 	/*! \param t the type of the packet we want to send */
-	Buffer(Type t);
+	Buffer(PacketType t);
 	//! constructor for an incoming packet
 	/*! store the packet's data in the Buffer to have easy access
 		\param content the data itself
@@ -47,7 +49,7 @@ public:
 
 	//! set the packet's type
 	/*! \param t the type of the packet we want to send */
-	void setType(Type t);
+	void setType(PacketType t);
 	//! add an integer value to the packet
 	/*! \param value the value itself */
 	void pushInt(int value);
@@ -83,7 +85,7 @@ public:
 	std::string popString();
 
 	//! return the actually stored type, used for incoming packages
-	inline Type getType() { return type; }
+	inline PacketType getType() { return type; }
 	//! return the data, used for outgoing packages
 	inline char* getData() { return data; }
 	//! return the data size, used for outgoing packages
@@ -98,6 +100,6 @@ private:
 	//! actual position in the data field
 	int pos;
 	//! the packet type
-	Type type;
+	PacketType type;
 };
 #endif

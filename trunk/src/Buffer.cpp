@@ -1,20 +1,20 @@
 #include "Buffer.hpp"
 #include <stdlib.h>
 
-Buffer::Buffer() : size(sizeof(Type)), freemem(true)
+Buffer::Buffer() : size(sizeof(PacketType)), freemem(true)
 {
 	data = (char*)malloc(size);
 }
 
-Buffer::Buffer(Type t) : size(sizeof(Type)), freemem(true)
+Buffer::Buffer(PacketType t) : size(sizeof(PacketType)), freemem(true)
 {
 	data = (char*)malloc(size);
 	setType(t);
 }
 
-Buffer::Buffer(char* content, int bytes) : data(content), size(bytes), pos(sizeof(Type)), freemem(false)
+Buffer::Buffer(char* content, int bytes) : data(content), size(bytes), pos(sizeof(PacketType)), freemem(false)
 {
-	memcpy(&type, data, sizeof(Type));
+	memcpy(&type, data, sizeof(PacketType));
 }
 
 Buffer::~Buffer()
@@ -22,10 +22,10 @@ Buffer::~Buffer()
 	if (freemem) free(data);
 }
 
-void Buffer::setType(Type t)
+void Buffer::setType(PacketType t)
 {
 	type = t;
-	memcpy(data, &type, sizeof(Type));
+	memcpy(data, &type, sizeof(PacketType));
 }
 
 void Buffer::pushInt(int value)

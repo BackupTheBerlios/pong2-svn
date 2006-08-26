@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <getopt.h>
+#include "config.h"
 
 #include "Server.hpp"
 #include "Client.hpp"
@@ -18,6 +19,7 @@
 \n -h \t set y resolution in pixels (default: 768)\
 \n -b \t set individual bitsperpixel (default: 32)\
 \n -f \t operate in fullscreen mode (default: windowed, toggle with 'f' key)\
+\n -v \t show version information and exit\
 \n"
 
 //! function to release used resources and hopefully restore the desktop
@@ -38,8 +40,9 @@ void Quit(void)
 int main (int argc, char **argv)
 {
 	Configuration conf;
+	std::cout << "Pong2 version " << VERSION << " (network protocol version " << conf.version << ")\n";
 	int c;
-	while ((c = getopt(argc, argv, "c:p:w:h:b:fn:")) != EOF) {
+	while ((c = getopt(argc, argv, "c:p:w:h:b:fn:v")) != EOF) {
 		std::stringstream hlp;
 		switch (c) {
 		case 'c':
@@ -67,6 +70,9 @@ int main (int argc, char **argv)
 			break;
 		case 'n':
 			conf.playername = optarg;
+			break;
+		case 'v':
+			exit(1);
 			break;
 		default:
 			std::cerr << "Usage: " << argv[0] << " " << USAGE;

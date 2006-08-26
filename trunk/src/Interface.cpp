@@ -7,7 +7,7 @@
 #include "Player.hpp"
 
 Interface::Interface(Framework* control)
- : fontlist(-1), framework(control), fps("0 FPS"), roundnum("Round 1"), paused(false), flashtimer(-1)
+ : fontlist(-1), framework(control), ping(""), fps("0 FPS"), roundnum("Round 1"), paused(false), flashtimer(-1)
 {
 	backTexture = framework->loadTexture("background.png");
 	charTexture[0] = framework->loadTexture("q1.png");
@@ -33,6 +33,13 @@ void Interface::updateRound(int r)
 	std::stringstream roundstr;
 	roundstr << "Round " << r+1;
 	roundnum = roundstr.str();
+}
+
+void Interface::updatePing(double pingtime)
+{
+	std::stringstream pingstr;
+	pingstr << round(pingtime * 10.0)/10.0 << " ms";
+	ping = pingstr.str();
 }
 
 void Interface::updateFPS(double frames)
@@ -306,6 +313,10 @@ void Interface::drawFPS()
 	glScalef(1.0, 1.0, 1.0);
 
 	drawText(fps);
+
+	glLoadIdentity();
+	glTranslatef(2.0, 20.0, 0);
+	drawText(ping);
 
 	glDisable(GL_BLEND);
 	endDraw();

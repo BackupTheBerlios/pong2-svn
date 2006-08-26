@@ -130,12 +130,14 @@ protected:
 	*/
 	void togglePause(bool pause, bool external);
 
+	virtual void ping()=0;
+
 	//! process message queue, send periodical packages, called by loop()
 	virtual void doNetworking()=0;
 
-	virtual void sendPacket(Buffer& data)=0;
+	virtual void sendPacket(Buffer& data, bool reliable)=0;
 
-	void sendSimplePacket(Type t);
+	void sendSimplePacket(PacketType t);
 
 	//! our Camera object setting up the viewport
 	Camera camera;

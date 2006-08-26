@@ -1,7 +1,10 @@
 0.1.2:
+	* documentation is bad now
+	* base support for player count != 2
+	* rewrote networking code to use libgrapple
 	* uses SDL_image for image loading, therefor PNGs are used instead of BMP
 	* fixed bug with wrong lighting if the camera distance is adjusted
-	* adjusted timeunit to 1, still investigating timing problems
+	* adjusted timeunit to 7, still investigating timing problems
 
 0.1.1:
 	* added stencil buffer initialization

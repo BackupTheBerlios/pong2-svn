@@ -73,18 +73,20 @@ void Framework::loop()
 				break;
 			}
 		}
-		doNetworking();
-
 		int tdiff = SDL_GetTicks() - lasttime;
 		if (tdiff > timeunit) {
 			frames++;
 			xdiff += tdiff; // always greater 0 because we decided to let tdiff be greater than timeunit
-			if ((xdiff >= 100)&&(xdiff >= timeunit * 20)) {
+			if ((xdiff >= 500)&&(xdiff >= timeunit * 25)) {
 				output.updateFPS(frames * 1000.0 / xdiff); // There are 1000 ticks / second
 				frames = 0;
 				xdiff = 0;
+				ping();
 			}
 			lasttime += tdiff;
+
+			// Multiplayer code
+			doNetworking();
 
 			// Game status code
 			updateGame(tdiff);
@@ -144,14 +146,14 @@ void Framework::handleMouseMove(int x, int y, unsigned char buttons)
 
 void Framework::togglePause(bool pause, bool external)
 {
-	Buffer sbuf;
+	PacketType t;
 	if ((((external)&&(pause))||((!external)&&(paused == 0)))&&(state != CONNECTING))
 	{
 		paused = SDL_GetTicks() - lasttime;
 		SDL_ShowCursor(1);
 		SDL_WM_GrabInput(SDL_GRAB_OFF);
 		output.togglePaused(true);
-		sbuf.setType(PAUSE_REQUEST);
+		t = PAUSE_REQUEST;
 	} else {
 		lasttime = SDL_GetTicks() + paused;
 		paused = 0;
@@ -160,10 +162,10 @@ void Framework::togglePause(bool pause, bool external)
 			SDL_WM_GrabInput(SDL_GRAB_ON);
 		}
 		output.togglePaused(false);
-		sbuf.setType(RESUME_REQUEST);
+		t = RESUME_REQUEST;
 	}
 	if (!external)
-		sendPacket(sbuf);
+		sendSimplePacket(t);
 }
 
 /* function to load in bitmap as a GL texture */
@@ -448,10 +450,11 @@ void Framework::removeTimer(int index)
 	*/
 }
 
-void Framework::sendSimplePacket(Type t)
+void Framework::sendSimplePacket(PacketType t)
 {
 	Buffer sbuf(t);
-	sendPacket(sbuf);
+	/* up till now, all simple packets are state control and therefor need to be sent reliable. */
+	sendPacket(sbuf, true);
 }
 
 void Framework::shutdown()
