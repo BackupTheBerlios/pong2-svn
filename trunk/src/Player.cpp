@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <GL/gl.h>
-#include <math.h>
+#include <cmath>
 
 Player::Player(Framework* control, const std::string& nick, Side where, double z)
  : framework(control), name(nick), side(where), position(0, 0, (where == FRONT ? 1.0 : -1.0) * z), width(1.0f), height(1.0f),

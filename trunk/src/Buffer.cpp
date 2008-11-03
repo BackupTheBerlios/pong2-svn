@@ -1,5 +1,6 @@
 #include "Buffer.hpp"
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 
 Buffer::Buffer() : size(sizeof(PacketType)), freemem(true)
 {

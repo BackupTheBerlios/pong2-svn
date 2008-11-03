@@ -1,8 +1,8 @@
+#include <iostream>
+#include <cmath>
 #include "Server.hpp"
 #include "Client.hpp"
-#include <iostream>
 #include "Buffer.hpp"
-#include <math.h>
 
 Server::Server(void *surf, const Configuration& conf)
  : Framework(surf, conf, UNINITIALIZED), ballouttimer(-1), ballspeed(6.0)

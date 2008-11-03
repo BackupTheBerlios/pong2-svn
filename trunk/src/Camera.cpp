@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <math.h>
+#include <cmath>
 
 Camera::Camera(unsigned int w, unsigned int h) : distance(7.75), angle(0.0, 0.0), mode(FOLLOW_PADDLE_REVERSE), width(w), height(h)
 {

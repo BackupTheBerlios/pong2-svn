@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <math.h>
+#include <cmath>
 #include "Interface.hpp"
 #include "Framework.hpp"
 #include "Player.hpp"

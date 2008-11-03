@@ -1,8 +1,8 @@
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
+#include <cmath>
 #include "Framework.hpp"
 #include "Interface.hpp"
-#include <math.h>
 #include "SDL_image.h"
 
 

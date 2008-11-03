@@ -1,7 +1,7 @@
 #include "Ball.hpp"
 #include "Framework.hpp"
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
 
 Ball::Ball(Framework* control)

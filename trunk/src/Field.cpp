@@ -1,5 +1,5 @@
 #include "Field.hpp"
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include "Framework.hpp"
 
